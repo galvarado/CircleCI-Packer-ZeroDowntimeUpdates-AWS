@@ -1,2 +1,2 @@
-# circleci-packer-zero-downtime-updates-aws
- Zero downtime updates of an Auto Scaling group in AWS with CircleCI and Packer
+# CircleCI-Packer-ZeroDowntimeUpdates-AWS
+ Zero downtime updates of EC2 instance AWS with CircleCI and Packer
