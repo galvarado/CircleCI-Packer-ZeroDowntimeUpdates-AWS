@@ -24,6 +24,9 @@ jobs:
           name: Build image with packer
           command: |
             packer build --var-file=packer/vars.packer.hcl packer/ami.pkr.hcl
+      - store_artifacts:
+        path: manifest.json
+        destination: manifest.json
 
   rolling-update:
     executor: aws-cli/default
@@ -35,8 +38,10 @@ jobs:
       - run:
           name: Rolling update
           command: |
-            date
-            w
+            aws ec2 create-launch-template-versio \
+            --launch-template-name ipcs-asg-launch-template
+            --source-version 1
+            --launch-template-data '{"ImageId":"ami-08ebbb9b96a9af18a"}'
 
 workflows:
   deploy-staging:

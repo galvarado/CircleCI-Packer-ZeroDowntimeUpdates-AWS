@@ -29,7 +29,9 @@ source "amazon-ebs" "ubuntu" {
 
 build {
   name = "custom-ami"
-  sources = [
-    "source.amazon-ebs.ubuntu"
-  ]
+  sources = ["source.amazon-ebs.ubuntu"]
+    post-processor "manifest" {
+        output = "manifest.json"
+        strip_path = true
+    }
 }
