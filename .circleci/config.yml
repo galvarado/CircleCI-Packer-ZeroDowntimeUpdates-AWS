@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Build image with packer
           command: |
-            packer build --var-file=packer/vars.packer.hcl packer/ami.pkr.hcl
+            bash ./.circleci/scripts/build_ami.sh
       - store_artifacts:
           path: manifest.json
           destination: manifest.json
