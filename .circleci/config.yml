@@ -32,41 +32,39 @@ jobs:
       - aws-cli/setup:
           aws-region: AWS_REGION
           profile-name: default
-      - run: 
+      - run:
           name: Rolling update
           command: |
-           date
-           w
+            date
+            w
 
 workflows:
   deploy-staging:
     jobs:
-    - packer-build:
-        context:
-          - packer
-        filters:
-          tags:
-            only: /^staging$/
-          branches:
-            ignore: /.*/
-    - rolling-update:
-        context:
-          - aws
-        requires:
-          - packer-build
-        filters:
-          tags:
-            only: /^staging$/
-          branches:
-            ignore: /.*/
-  
+      - packer-build:
+          context:
+            - aws
+          filters:
+            tags:
+              only: /^staging$/
+            branches:
+              ignore: /.*/
+      - rolling-update:
+          context:
+            - aws
+          requires:
+            - packer-build
+          filters:
+            tags:
+              only: /^staging$/
+            branches:
+              ignore: /.*/
+
   deploy-production:
     jobs:
-    - rolling-update:
-        context:
-          - aws
-        filters:
-          branches:
-            only: main
-
-            
+      - rolling-update:
+          context:
+            - aws
+          filters:
+            branches:
+              only: main
