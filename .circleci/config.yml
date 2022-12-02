@@ -15,7 +15,7 @@ jobs:
       - run:
           name: Install packages
           command: |
-            apk add curl
+            apk add curl jq
       - run:
           name: Packer init
           command: |
