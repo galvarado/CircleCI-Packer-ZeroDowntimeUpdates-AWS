@@ -29,21 +29,16 @@ jobs:
     executor: aws-cli/default
     steps:
       - checkout
-      - set-aws-environment-variables:
-          aws-access-key-id: << parameters.aws-access-key-id >>
-          aws-secret-access-key: << parameters.aws-secret-access-key >>
-          aws-region: << parameters.aws-region >>
       - aws-cli/setup:
           aws-region: AWS_REGION
           profile-name: default
-      - run: echo "Run your code here"
+      - run: 
           name: Rolling update
           command: |
-          date
-          w
+           date
+           w
 
 workflows:
-
   deploy-staging:
     jobs:
     - packer-build:
@@ -57,7 +52,7 @@ workflows:
     - rolling-update:
         context:
           - aws
-          requires:
+        requires:
           - packer-build
         filters:
           tags:
@@ -70,7 +65,7 @@ workflows:
     - rolling-update:
         context:
           - aws
-         filters:
+        filters:
           branches:
             only: main
 
