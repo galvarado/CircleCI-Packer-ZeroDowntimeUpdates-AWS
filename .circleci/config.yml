@@ -25,8 +25,8 @@ jobs:
           command: |
             packer build --var-file=packer/vars.packer.hcl packer/ami.pkr.hcl
       - store_artifacts:
-        path: manifest.json
-        destination: manifest.json
+          path: manifest.json
+          destination: manifest.json
 
   rolling-update:
     executor: aws-cli/default
