@@ -23,7 +23,8 @@ jobs:
       - run:
           name: Build image with packer
           command: |
-            bash ./.circleci/scripts/build_ami.sh
+            packer build packer/ami.pkr.hcl
+            echo "export NEW_AMI_ID=$(jq -r '.builds[0].artifact_id|split(":")[1]' ./manifest.json)" >> $BASH_ENV
       - store_artifacts:
           path: manifest.json
           destination: manifest.json
