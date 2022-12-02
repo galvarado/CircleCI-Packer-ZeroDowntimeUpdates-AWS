@@ -1,0 +1,77 @@
+version: "2.1"
+orbs:
+  aws-cli: circleci/aws-cli@3.1.3
+
+executors:
+  packer:
+    docker:
+      - image: "hashicorp/packer:light"
+
+jobs:
+  packer-build:
+    executor: packer
+    steps:
+      - checkout
+      - run:
+          name: Install packages
+          command: |
+            apk add curl
+      - run:
+          name: Packer init
+          command: |
+            packer init packer/
+      - run:
+          name: Build image with packer
+          command: |
+            packer build --var-file=packer/vars.packer.hcl packer/ami.pkr.hcl
+
+  rolling-update:
+    executor: aws-cli/default
+    steps:
+      - checkout
+      - set-aws-environment-variables:
+          aws-access-key-id: << parameters.aws-access-key-id >>
+          aws-secret-access-key: << parameters.aws-secret-access-key >>
+          aws-region: << parameters.aws-region >>
+      - aws-cli/setup:
+          aws-region: AWS_REGION
+          profile-name: default
+      - run: echo "Run your code here"
+          name: Rolling update
+          command: |
+          date
+          w
+
+workflows:
+
+  deploy-staging:
+    jobs:
+    - packer-build:
+        context:
+          - packer
+        filters:
+          tags:
+            only: /^staging$/
+          branches:
+            ignore: /.*/
+    - rolling-update:
+        context:
+          - aws
+          requires:
+          - packer-build
+        filters:
+          tags:
+            only: /^staging$/
+          branches:
+            ignore: /.*/
+  
+  deploy-production:
+    jobs:
+    - rolling-update:
+        context:
+          - aws
+         filters:
+          branches:
+            only: main
+
+            
