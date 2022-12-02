@@ -38,7 +38,6 @@ jobs:
       - run:
           name: Rolling update
           command: |
-            NEW_AMI_ID=2 \
             bash ./.circleci/scripts/rolling_update.sh
 workflows:
   deploy-staging:
