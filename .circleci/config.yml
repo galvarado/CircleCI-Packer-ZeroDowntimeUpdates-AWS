@@ -38,7 +38,7 @@ jobs:
       - run:
           name: Rolling update
           command: |
-
+            bash ./.circleci/scripts/rolling_update.sh
 workflows:
   deploy-staging:
     jobs:
