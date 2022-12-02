@@ -38,10 +38,6 @@ jobs:
       - run:
           name: Rolling update
           command: |
-            aws ec2 create-launch-template-versio \
-            --launch-template-name ipcs-asg-launch-template
-            --source-version 1
-            --launch-template-data '{"ImageId":"ami-08ebbb9b96a9af18a"}'
 
 workflows:
   deploy-staging:
@@ -64,12 +60,3 @@ workflows:
               only: /^staging$/
             branches:
               ignore: /.*/
-
-  deploy-production:
-    jobs:
-      - rolling-update:
-          context:
-            - aws
-          filters:
-            branches:
-              only: main
