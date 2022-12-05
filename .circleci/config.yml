@@ -53,7 +53,7 @@ jobs:
           name: Rolling update
           command: |
             # Read AMI_ID from manifest.json 
-            NEW_AMI_ID=$(jq -r '.builds[0].artifact_id|split(":")[1]' /tmp/workspace/manifest.json \
+            NEW_AMI_ID=$(jq -r '.builds[0].artifact_id|split(":")[1]' /tmp/workspace/manifest.json) \
             bash ./.circleci/scripts/rolling_update.sh
 workflows:
   deploy-staging:
