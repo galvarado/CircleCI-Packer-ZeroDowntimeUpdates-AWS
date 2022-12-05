@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Packer build
           command: |
-            packer build --var-file=packer/vars.packer.hcl packer/ami.pkr.hcl
+            packer build -f --var-file=packer/vars.packer.hcl packer/ami.pkr.hcl
       - store_artifacts:
           path: manifest.json
           destination: manifest.json
