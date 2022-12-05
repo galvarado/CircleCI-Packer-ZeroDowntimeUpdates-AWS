@@ -20,17 +20,29 @@ jobs:
           name: Packer init
           command: |
             packer init packer/
-      - run:
-          name: Build image with packer
-          command: |
-            echo "export NEW_AMI_ID=1)" >> $BASH_ENV
+      - run: mkdir -p workspace
+      - run: echo "Hello" > workspace/manifest.json
       - store_artifacts:
           path: manifest.json
           destination: manifest.json
+      - persist_to_workspace:
+          # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is
+          # taken to be the root directory of the workspace.
+          root: workspace
+          # Must be relative path from root
+          paths:
+            - manifest.json
 
   rolling-update:
     executor: aws-cli/default
     steps:
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: /workspace
+      - run:
+          name: cat
+          command: |
+            cat manifest.json
       - checkout
       - aws-cli/setup:
           aws-region: AWS_REGION
