@@ -40,7 +40,7 @@ jobs:
       - run:
           name: cat
           command: |
-            cat tmp/workspace/manifest.json
+            cat /tmp/workspace/manifest.json
       - checkout
       - aws-cli/setup:
           aws-region: AWS_REGION
