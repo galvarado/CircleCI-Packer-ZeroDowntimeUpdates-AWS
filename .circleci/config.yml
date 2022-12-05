@@ -20,6 +20,10 @@ jobs:
           name: Packer init
           command: |
             packer init packer/
+      - run:
+          name: Packer build
+          command: |
+            packer build --var-file=packer/vars.packer.hcl packer/ami.pkr.hcl
       - store_artifacts:
           path: manifest.json
           destination: manifest.json
@@ -48,7 +52,8 @@ jobs:
       - run:
           name: Rolling update
           command: |
-            NEW_AMI_ID=$NEW_AMI_ID \
+            # Read AMI_ID from manifest.json 
+            NEW_AMI_ID=$(jq -r '.builds[0].artifact_id|split(":")[1]' /tmp/workspace/manifest.json \
             bash ./.circleci/scripts/rolling_update.sh
 workflows:
   deploy-staging:
