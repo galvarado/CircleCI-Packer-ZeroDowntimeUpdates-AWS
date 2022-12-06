@@ -93,14 +93,3 @@ workflows:
       - setup-eks-node:
           context:
             - aws
-
-      - rolling-update:
-          context:
-            - aws
-          requires:
-            - packer-build
-          filters:
-            tags:
-              only: /^staging$/
-            branches:
-              ignore: /.*/
