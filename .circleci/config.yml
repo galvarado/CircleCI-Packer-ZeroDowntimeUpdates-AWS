@@ -48,13 +48,24 @@ jobs:
       - checkout
       - aws-cli/setup:
           aws-region: AWS_REGION
-          profile-name: default
       - run:
           name: Rolling update
           command: |
             # Read AMI_ID from manifest.json 
             NEW_AMI_ID=$(jq -r '.builds[0].artifact_id|split(":")[1]' /tmp/workspace/manifest.json) \
             bash ./.circleci/scripts/rolling_update.sh
+
+ setup-eks-node:
+    executor: aws-cli/default
+    steps:
+      - checkout
+      - aws-cli/setup:
+          aws-region: AWS_REGION
+      - run:
+          name: Setup
+          command: |
+            bash ./.circleci/scripts/scale_up_eks_node.sh
+
 workflows:
   deploy-staging:
     jobs:
@@ -66,6 +77,23 @@ workflows:
               only: /^staging$/
             branches:
               ignore: /.*/
+      - rolling-update:
+          context:
+            - aws
+          requires:
+            - packer-build
+          filters:
+            tags:
+              only: /^staging$/
+            branches:
+              ignore: /.*/
+
+  wait-for-eks:
+    jobs:
+      - setup-eks-node:
+          context:
+            - aws
+
       - rolling-update:
           context:
             - aws
