@@ -27,7 +27,6 @@ commands:
           kubectl-version: "v1.23.5"
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: << parameters.cluster-name >>
-          aws-region: << parameters.aws-region >>
       - run:
           name: Install eksctl
           command: |
