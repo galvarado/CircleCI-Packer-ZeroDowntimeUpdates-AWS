@@ -22,7 +22,7 @@ echo "Scale up eks nodegroup to 1"
 
 time eksctl scale nodegroup --cluster=p9-eks-cluster \
 --nodes=1 --name=node-group-1-2022111500171013530000001a \
---nodes-min=1 --nodes-max=1 --profile p9:ikon-test
+--nodes-min=1 --nodes-max=1 
 
 # Wait until the new node status is ready
 echo "Wait until node status is ready"

@@ -69,7 +69,7 @@ jobs:
             eksctl version
 
       - run:
-          name: Setup
+          name: Setup eks node
           command: |
             bash ./.circleci/scripts/scale_up_eks_node.sh
 
