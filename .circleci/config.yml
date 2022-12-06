@@ -8,6 +8,36 @@ executors:
   packer:
     docker:
       - image: "hashicorp/packer:light"
+  python3:
+    docker:
+      - image: "cimg/python:3.10"
+
+commands:
+  scale-up-eks:
+    parameters:
+      aws-region:
+        type: string
+      cluster-name:
+        type: string
+    steps:
+      - checkout
+      - aws-cli/setup:
+          aws-region: << parameters.aws-region >>
+      - kubernetes/install-kubectl:
+          kubectl-version: "v1.23.5"
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: << parameters.cluster-name >>
+          aws-region: << parameters.aws-region >>
+      - run:
+          name: Install eksctl
+          command: |
+            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+            sudo mv /tmp/eksctl /usr/local/bin
+            eksctl version
+      - run:
+          name: Setup eks node
+          command: |
+            bash ./.circleci/scripts/scale_up_eks_node.sh
 
 jobs:
   packer-build:
@@ -49,7 +79,7 @@ jobs:
             cat /tmp/workspace/manifest.json
       - checkout
       - aws-cli/setup:
-          aws-region: "${AWS_REGION}"
+          aws-region: AWS_REGION
       - run:
           name: Rolling update
           command: |
@@ -58,26 +88,11 @@ jobs:
             bash ./.circleci/scripts/rolling_update.sh
 
   setup-eks-node:
-    executor: aws-cli/default
+    executor: python3
     steps:
-      - checkout
-      - aws-cli/setup:
-          aws-region: "${AWS_REGION}"
-      - kubernetes/install-kubectl:
-          kubectl-version: "v1.23.5"
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: p9-eks-cluster
-          aws-region: "${AWS_REGION}"
-      - run:
-          name: Install eksctl
-          command: |
-            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-            sudo mv /tmp/eksctl /usr/local/bin
-            eksctl version
-      - run:
-          name: Setup eks node
-          command: |
-            bash ./.circleci/scripts/scale_up_eks_node.sh
+      - scale-up-eks:
+          aws-region: AWS_REGION
+          cluster-name: "p9-eks-cluster"
 
 workflows:
   deploy-staging:
