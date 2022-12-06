@@ -49,7 +49,7 @@ jobs:
             cat /tmp/workspace/manifest.json
       - checkout
       - aws-cli/setup:
-          aws-region: AWS_REGION
+          aws-region: "${AWS_REGION}"
       - run:
           name: Rolling update
           command: |
@@ -62,12 +62,12 @@ jobs:
     steps:
       - checkout
       - aws-cli/setup:
-          aws-region: $AWS_REGION
+          aws-region: "${AWS_REGION}"
       - kubernetes/install-kubectl:
           kubectl-version: "v1.23.5"
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: p9-eks-cluster
-          aws-region: $AWS_REGION
+          aws-region: "${AWS_REGION}"
       - run:
           name: Install eksctl
           command: |
