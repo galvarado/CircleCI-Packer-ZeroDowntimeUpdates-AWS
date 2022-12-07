@@ -9,17 +9,32 @@ set -eu -o pipefail # Causes this script to terminate if any command returns an 
 ################################## Functions ##################################
 
 checkContainerStatus() {
+   # Check if all pods are fully operational: the Pod is able to serve requests
+   # and should be added to the load balancing pools of all matching Services.
+   #
+   # Note: A pod could be in a running state but still not ready. Therefore we
+   # verify that all the conditions of a pod are True:
+   #
+   # kubectl describe -n kube-system pod POD_NAME | grep Conditions: -A5
+   #   Conditions:
+   #     Type              Status
+   #     Initialized       True 
+   #     Ready             True 
+   #     ContainersReady   True 
+   #     PodScheduled      True 
+   #   
+   # https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-conditions
    
-   # Just list pods to see their status
-   kubectl get pods -n kube-system
-
-   # We need all pods in a ready state.
    containers_status=( $(kubectl get pods -n kube-system  --output='jsonpath={.items[*].status.conditions[*].status}') )
+
+   # Just print pods status
+   kubectl get pods -n kube-system
+   
    
    if [[ !" ${containers_status[*]} " =~ " False " ]]; then
-      echo "Some pods are not ready"
+      echo -e "\n***Some kube-system pods are not ready"
    else
-      echo "All kube-system pods are ready."
+      echo -e "\n***All kube-system pods are ready!"
       exit 0
    fi
 }
@@ -39,24 +54,25 @@ scaleUp() {
    --nodes=$DESIRED_NODES --name=$NODE_GROUP_NAME \
    --nodes-min=$DESIRED_NODES --nodes-max=1 
 
-   # Wait until the new node status is ready
+   # a while loop that will break until the node is ready
    echo "Wait until node status is ready"
    while true ; do
-      # Just list the nodes to see if it is already bootstrapped
+      # List nodes to see if it is already bootstrapped
       kubectl get nodes
 
       # Node is full operational when kubernetes reports it status in ready
-      # if status is ready it will go out of the while loop (break)
       [ ! -z "$(kubectl wait node --all --for condition=ready --timeout=600s 2> /dev/null)" ] && echo && break
 
       # if not ready, will check again in 2 seconds
-      echo "Still waiting..."
+      echo -e "\nStill waiting..."
       sleep 2
-
-
    done
 
-   # Once is ready, wait for kube-system pods:
+   # At this point the node is ready
+   echo -e "\nNode is ready!"
+   kubectl get nodes
+
+   # A while loop that will exit until kube-system pods are ready:
    # - aws-load-balancer-controller
    # - aws-node
    # - coredns
@@ -64,7 +80,7 @@ scaleUp() {
    # - kube-proxy
    # - secrets-store-csi-driver
    while true ; do
-      echo "Verifying that kube-system pods are ready"
+      echo -e "\nVerifying that kube-system pods are ready"
       checkContainerStatus
       # Check each 5 seconds
       sleep 5
