@@ -39,7 +39,7 @@ commands:
       - run:
           name: Scale eks
           command: |
-            bash ./.circleci/scripts/scale_eks_cluster.sh << parameters.action >>
+            bash ./.circleci/scripts/scale_eks_cluster.sh --<< parameters.action >>
 
 jobs:
   packer-build:
