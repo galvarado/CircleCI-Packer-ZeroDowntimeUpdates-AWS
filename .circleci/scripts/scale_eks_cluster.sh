@@ -9,12 +9,15 @@ set -eu -o pipefail # Causes this script to terminate if any command returns an 
 ################################## Functions ##################################
 
 checkContainerStatus() {
+   
+   # Just list pods to see their status
+   kubectl get pods -n kube-system
+
    # We need all pods in a ready state.
    containers_status=( $(kubectl get pods -n kube-system  --output='jsonpath={.items[*].status.conditions[*].status}') )
+   
    if [[ !" ${containers_status[*]} " =~ " False " ]]; then
       echo "Some pods are not ready"
-      # Just list pods to see their status
-      kubectl get pods -n kube-system
    else
       echo "All kube-system pods are ready."
       exit 0
@@ -38,13 +41,18 @@ scaleUp() {
    # Wait until the new node status is ready
    echo "Wait until node status is ready"
    while true ; do
-      # Node is full operational when kubernetes reports it status in ready
-      [ ! -z "$(kubectl wait node --all --for condition=ready --timeout=600s 2> /dev/null)" ] && echo && break
-      # Check each 2 seconds
-      sleep 2
-      echo "Still waiting..."
-      # Just list the node to see if it is already bootstrapped
+      # Just list the nodes to see if it is already bootstrapped
       kubectl get nodes
+
+      # Node is full operational when kubernetes reports it status in ready
+      # if status is ready it will go out of the hile loop (break)
+      [ ! -z "$(kubectl wait node --all --for condition=ready --timeout=600s 2> /dev/null)" ] && echo && break
+
+      # if not ready, will check again in 2 seconds
+      echo "Still waiting..."
+      sleep 2
+
+
    done
 
    # Once is ready, wait for kube-system pods:
@@ -52,7 +60,7 @@ scaleUp() {
    # - aws-node
    # - coredns
    # - csi-secrets-store-provider
-   # - kube-proxy}
+   # - kube-proxy
    # - secrets-store-csi-driver
    while true ; do
       echo "Verifying that kube-system pods are ready"
