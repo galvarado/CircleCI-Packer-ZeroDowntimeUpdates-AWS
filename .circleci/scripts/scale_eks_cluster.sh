@@ -16,15 +16,17 @@ checkContainerStatus() {
 export -f checkContainerStatus
 
 ### Main thread ###
+EKS_CLUSTER_NAME="p9-eks-cluster"
+NODE_GROUP_NAME=$(eksctl get nodegroup --cluster $EKS_CLUSTER_NAME -o json | jq '.[] .Name')
 
 if [ "$1" == "scale-up" ];then
-
+   DESIRED_NODES=1
    # Scale up nodegroup to 1
-   echo "Scale up eks nodegroup to 1"
-
-   time eksctl scale nodegroup --cluster=p9-eks-cluster \
-   --nodes=1 --name=node-group-1-2022111500171013530000001a \
-   --nodes-min=1 --nodes-max=1 
+   echo "Scale up $EKS_CLUSTER_NAME to $DESIRED_NODES. Nodegroup to scale: $NODE_GROUP_NAME."
+   
+   time eksctl scale nodegroup --cluster=$EKS_CLUSTER_NAME \
+   --nodes=$DESIRED_NODES --name=$NODE_GROUP_NAME \
+   --nodes-min=$DESIRED_NODES --nodes-max=1 
 
    # Wait until the new node status is ready
    echo "Wait until node status is ready"
@@ -46,10 +48,11 @@ if [ "$1" == "scale-up" ];then
 
 elif [ "$1" == "tear-down" ];then
 
-   # Scale down nodegroup to zero
-   echo "Scale down eks nodegroup to zero"
+   DESIRED_NODES=0
+   # Scale up nodegroup to 0
+   echo "Scale down $EKS_CLUSTER_NAME to $DESIRED_NODES. Nodegroup to scale: $NODE_GROUP_NAME."
 
-   time eksctl scale nodegroup --cluster=p9-eks-cluster \
-   --nodes=0 --name=node-group-1-2022111500171013530000001a \
-   --nodes-min=0 --nodes-max=1
+   time eksctl scale nodegroup --cluster=$EKS_CLUSTER_NAME \
+   --nodes=$DESIRED_NODES --name=$NODE_GROUP_NAME \
+   --nodes-min=$DESIRED_NODES --nodes-max=1
 fi
