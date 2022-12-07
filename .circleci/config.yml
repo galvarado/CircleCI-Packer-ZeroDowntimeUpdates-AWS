@@ -13,11 +13,13 @@ executors:
       - image: "cimg/python:3.10"
 
 commands:
-  scale-up-eks:
+  scale-eks:
     parameters:
       aws-region:
         type: string
       cluster-name:
+        type: string
+      action:
         type: string
     steps:
       - checkout
@@ -35,9 +37,9 @@ commands:
             sudo mv /tmp/eksctl /usr/local/bin
             eksctl version
       - run:
-          name: Setup eks node
+          name: Scale eks
           command: |
-            bash ./.circleci/scripts/scale_up_eks_node.sh
+            bash ./.circleci/scripts/scale_eks_cluster.sh << parameters.action >>
 
 jobs:
   packer-build:
@@ -87,12 +89,21 @@ jobs:
             NEW_AMI_ID=$(jq -r '.builds[0].artifact_id|split(":")[1]' /tmp/workspace/manifest.json) \
             bash ./.circleci/scripts/rolling_update.sh
 
-  setup-eks-node:
+  scale-up-eks-node:
     executor: python3
     steps:
-      - scale-up-eks:
+      - scale-eks:
           aws-region: AWS_REGION
           cluster-name: "p9-eks-cluster"
+          action: "scale-up"
+
+  tear-down-eks-node:
+    executor: python3
+    steps:
+      - scale-eks:
+          aws-region: AWS_REGION
+          cluster-name: "p9-eks-cluster"
+          action: "tear-down"
 
 workflows:
   deploy-staging:
@@ -116,8 +127,24 @@ workflows:
             branches:
               ignore: /.*/
 
-  wait-for-eks:
+  scale-up-eks:
     jobs:
-      - setup-eks-node:
+      - scale-up-eks-node:
           context:
             - aws
+          filters:
+            tags:
+              only: /^up$/
+            branches:
+              ignore: /.*/
+
+  tear-down-eks:
+    jobs:
+      - tear-down-eks-node:
+          context:
+            - aws
+          filters:
+            tags:
+              only: /^down$/
+            branches:
+              ignore: /.*/
