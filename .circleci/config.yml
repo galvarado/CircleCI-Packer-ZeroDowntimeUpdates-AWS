@@ -12,35 +12,6 @@ executors:
     docker:
       - image: "cimg/python:3.10"
 
-commands:
-  scale-eks:
-    parameters:
-      aws-region:
-        type: string
-      cluster-name:
-        type: string
-      action:
-        type: string
-    steps:
-      - checkout
-      - aws-cli/setup:
-          aws-region: << parameters.aws-region >>
-      - kubernetes/install-kubectl:
-          kubectl-version: "v1.23.5"
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: << parameters.cluster-name >>
-          aws-region: "$AWS_REGION"
-      - run:
-          name: Install eksctl
-          command: |
-            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-            sudo mv /tmp/eksctl /usr/local/bin
-            eksctl version
-      - run:
-          name: Scale eks
-          command: |
-            bash ./.circleci/scripts/scale_eks_cluster.sh --<< parameters.action >>
-
 jobs:
   packer-build:
     executor: packer
@@ -89,22 +60,6 @@ jobs:
             NEW_AMI_ID=$(jq -r '.builds[0].artifact_id|split(":")[1]' /tmp/workspace/manifest.json) \
             bash ./.circleci/scripts/rolling_update.sh
 
-  scale-up-eks-node:
-    executor: python3
-    steps:
-      - scale-eks:
-          aws-region: AWS_REGION
-          cluster-name: "p9-eks-cluster"
-          action: "scale-up"
-
-  tear-down-eks-node:
-    executor: python3
-    steps:
-      - scale-eks:
-          aws-region: AWS_REGION
-          cluster-name: "p9-eks-cluster"
-          action: "tear-down"
-
 workflows:
   deploy-staging:
     jobs:
@@ -124,27 +79,5 @@ workflows:
           filters:
             tags:
               only: /^staging$/
-            branches:
-              ignore: /.*/
-
-  scale-up-eks:
-    jobs:
-      - scale-up-eks-node:
-          context:
-            - aws
-          filters:
-            tags:
-              only: /^up$/
-            branches:
-              ignore: /.*/
-
-  tear-down-eks:
-    jobs:
-      - tear-down-eks-node:
-          context:
-            - aws
-          filters:
-            tags:
-              only: /^down$/
             branches:
               ignore: /.*/
